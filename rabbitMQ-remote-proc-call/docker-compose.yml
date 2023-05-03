@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    hostname: my-rabbit
+    container_name: rabbitmq
+    volumes:
+      - ./rabbitmq/etc/definitions.json:/etc/rabbitmq/definitions.json
+      - ./rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+      - ./rabbitmq/data:/var/lib/rabbitmq/mnesia/rabbit@my-rabbit
+      - ./rabbitmq/logs:/var/log/rabbitmq/log
+    ports:
+      - 5672:5672
+      - 15674:15672
+
+  RPCClient:
+    build: ./RPCClient
+    image: rpc.client-image
+    container_name: rpc.client
+    ports:
+      - 5000:80
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - RABBIT_HOSTNAME=rabbitmq
+      - sleepTime=18000
+    restart: on-failure
+    depends_on:
+      - rabbitmq
+
+  RPCServer:
+    build: ./RPCServer
+    image: rpc.server-image
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - RABBIT_HOSTNAME=rabbitmq
+      - sleepTime=18000
+    restart: on-failure
+    depends_on:
+      - rabbitmq

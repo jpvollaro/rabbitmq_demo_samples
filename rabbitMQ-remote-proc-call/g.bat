@@ -1,0 +1,2 @@
+cd .\RPCServer
+dotnet run
